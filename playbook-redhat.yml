@@ -7,8 +7,8 @@
     - name: Install common dependencies
       yum:
         name:
-          - libselinux-python
-          - libsemanage-python
+          - python3-libselinux
+          - python3-libsemanage
           - firewalld
         state: installed
         
@@ -20,9 +20,11 @@
       yum:
         name:
           - mariadb-server
-          - MySQL-python
         state: installed
-
+    - name: Install pymysql
+      pip:
+        name: pymysql
+        state: present
     - name: Create Mysql configuration file
       template: src=templates/my.cnf.j2 dest=/etc/my.cnf
 
@@ -58,7 +60,10 @@
         name:
           - httpd
           - php
-          - php-mysql
+          - php-mysqlnd
+          - php-pdo 
+          - php-gd 
+          - php-mbstring
         state: present
 
     - name: Start firewalld
@@ -69,7 +74,6 @@
     
     - name: Patch httpd in SElinux 
       command: setsebool -P httpd_can_network_connect_db 1
-      when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
 
     - name: Set index.php as the default page
       replace:

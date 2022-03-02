@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<?php
+
+// Create connection
+$conn = new mysqli("{{hostvars['mariadbserver1']['ansible_host'] }}", "{{ hostvars['mariadbserver1']['db_user'] }}", "{{ hostvars['mariadbserver1']['db_user_password'] }}", "{{ hostvars['mariadbserver1']['db_name'] }}");
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+    echo "Connection failed: " . $conn->connect_error;
+}
+
+$sql = "SELECT id, Name, Origin FROM fruits";
+$result = $conn->query($sql);
+
+if ($result->num_rows > 0) {
+    // output data of each row
+    while($row = $result->fetch_assoc()) {
+        echo "<br> id: ". $row["id"]. " - Name: ". $row["Name"]. " - Origin: " . $row["Origin"] . "<br>";
+    }
+} else {
+    echo "0 results";
+}
+
+$conn->close();
+?>
+
+</body>
+</html>

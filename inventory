@@ -1,0 +1,5 @@
+[db_servers]
+mariadbserver1 ansible_host=enter_db_host_ip ansible_ssh_private_key_file=enter_private_key_file_path ansible_user=enter_username_to_connect_host mysql_port=3306 db_name=fruits_db db_user=appuser db_user_password=password@2022
+
+[web_servers]
+httpdwebserver1 ansible_host=enter_web_host_ip ansible_ssh_private_key_file=enter_private_key_file_path ansible_user=enter_username_to_connect_host httpd_port=80 

@@ -1,0 +1,84 @@
+---
+
+- name: Common
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install common dependencies
+      yum:
+        name:
+          - libselinux-python
+          - libsemanage-python
+          - firewalld
+        state: installed
+        
+- name: Setup MariaDB host
+  hosts: db_servers
+  become: yes
+  tasks:
+    - name: Install MariaDB package
+      yum:
+        name:
+          - mariadb-server
+          - MySQL-python
+        state: installed
+
+    - name: Create Mysql configuration file
+      template: src=templates/my.cnf.j2 dest=/etc/my.cnf
+
+    - name: Start MariaDB Service
+      service: name=mariadb state=started enabled=yes
+
+    - name: Start firewalld
+      service: name=firewalld state=started enabled=yes
+
+    - name: insert firewalld rule
+      firewalld: port={{ mysql_port }}/tcp permanent=true state=enabled immediate=yes
+
+    - name: Create Application Database
+      mysql_db: name={{ db_name }} state=present
+
+    - name: Create Application DB User
+      mysql_user: name={{ db_user }} password={{ db_user_password }} priv=*.*:ALL host={{ hostvars['httpdwebserver1']['ansible_host'] }} state=present
+
+    - name: Move db-load-script to db host
+      template:
+        src: templates/db-load-script.sql.j2
+        dest: /tmp/db-load-script.sql 
+
+    - name: Load Inventory Data
+      shell: mysql -f < /tmp/db-load-script.sql
+
+- name: Setup web host
+  hosts: web_servers
+  become: yes
+  tasks:
+    - name: Install httpd and php
+      yum:
+        name:
+          - httpd
+          - php
+          - php-mysql
+        state: present
+
+    - name: Start firewalld
+      service: name=firewalld state=started enabled=yes
+
+    - name: insert firewalld rule for httpd
+      firewalld: port={{ httpd_port }}/tcp permanent=true state=enabled immediate=yes
+    
+    - name: Patch httpd in SElinux 
+      command: setsebool -P httpd_can_network_connect_db 1
+      when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
+
+    - name: Set index.php as the default page
+      replace:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: 'DirectoryIndex index.html'
+        replace: 'DirectoryIndex index.php'
+
+    - name: http service state
+      service: name=httpd state=started enabled=yes
+
+    - name: Creates the index.php file
+      template: src=templates/index.php.j2 dest=/var/www/html/index.php

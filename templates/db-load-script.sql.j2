@@ -1,0 +1,7 @@
+USE {{ db_name }};
+
+DROP TABLE fruits;
+
+CREATE TABLE fruits (id mediumint(8) unsigned NOT NULL auto_increment,Name varchar(255) default NULL,Origin varchar(255) default NULL, PRIMARY KEY (id)) AUTO_INCREMENT=1;
+
+INSERT INTO fruits (Name,Origin) VALUES ("Apricot","China"),("Grapefruit","Micronesia"),("Mango","India");
